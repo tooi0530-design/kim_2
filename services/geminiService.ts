@@ -1,6 +1,18 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// API 키가 없을 경우를 대비해 안전하게 초기화합니다.
+// vite.config.ts에서 define 설정을 통해 process.env.API_KEY가 문자열로 대체됩니다.
+const apiKey = process.env.API_KEY || '';
+
+let ai: GoogleGenAI | null = null;
+
+if (apiKey) {
+  try {
+    ai = new GoogleGenAI({ apiKey });
+  } catch (e) {
+    console.error("Gemini 클라이언트 초기화 실패:", e);
+  }
+}
 
 export const getAiAdvice = async (
   goal: string,
@@ -8,6 +20,10 @@ export const getAiAdvice = async (
   dayNumber: number,
   journalContent: string
 ): Promise<string> => {
+  if (!ai) {
+    return "API 키가 설정되지 않았습니다. Vercel 환경 변수에서 API_KEY를 설정해주세요.";
+  }
+
   try {
     const prompt = `
       You are a warm, supportive self-care coach.
